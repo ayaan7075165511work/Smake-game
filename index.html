@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Snake Game | Wrap + Sound FX | Mobile</title>
+    <style>
+        * {
+            user-select: none;
+            touch-action: manipulation;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a2f1f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 16px;
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Roboto', sans-serif;
+        }
+
+        .game-container {
+            background: #0e2a1f;
+            border-radius: 48px;
+            padding: 20px 20px 24px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.1);
+        }
+
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            background: #00000055;
+            backdrop-filter: blur(4px);
+            padding: 12px 20px;
+            border-radius: 60px;
+            margin-bottom: 18px;
+            color: #f9f3c1;
+            text-shadow: 0 2px 3px black;
+        }
+
+        .score-box {
+            background: #00000066;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1.6rem;
+            letter-spacing: 1px;
+        }
+
+        .score-box span {
+            font-size: 0.9rem;
+            font-weight: normal;
+            margin-right: 6px;
+        }
+
+        .pause-btn {
+            background: #2c2e3e;
+            border: none;
+            font-size: 1.7rem;
+            font-weight: bold;
+            color: white;
+            padding: 6px 20px;
+            border-radius: 60px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #121212;
+            transition: 0.07s linear;
+            touch-action: manipulation;
+            font-family: monospace;
+        }
+
+        .pause-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #121212;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background-color: #1e3b2a;
+            border-radius: 28px;
+            box-shadow: 0 10px 18px rgba(0,0,0,0.3);
+            width: 100%;
+            height: auto;
+            cursor: pointer;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 28px;
+            margin-top: 24px;
+            padding: 0 12px;
+        }
+
+        .turn-btn {
+            flex: 1;
+            background: #ffb347;
+            background: linear-gradient(145deg, #f5a623, #e6951e);
+            border: none;
+            font-size: 2.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #2d2b1f;
+            padding: 18px 0;
+            border-radius: 80px;
+            box-shadow: 0 7px 0 #a45200;
+            transition: 0.05s linear;
+            touch-action: manipulation;
+            cursor: pointer;
+            font-family: inherit;
+            text-align: center;
+        }
+
+        .turn-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 3px 0 #a45200;
+        }
+
+        .gameover-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            visibility: hidden;
+            font-family: inherit;
+        }
+
+        .gameover-card {
+            background: #2b2b2b;
+            border-radius: 64px;
+            padding: 28px 36px;
+            text-align: center;
+            color: white;
+            width: 280px;
+            box-shadow: 0 20px 30px black;
+            border: 1px solid gold;
+        }
+
+        .gameover-card h2 {
+            font-size: 2.2rem;
+            margin: 0 0 12px;
+            color: #ffc857;
+        }
+
+        .final-score {
+            font-size: 2rem;
+            background: #00000077;
+            padding: 10px;
+            border-radius: 50px;
+            margin: 12px 0;
+        }
+
+        .restart-btn {
+            background: #4caf50;
+            border: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 12px 24px;
+            border-radius: 60px;
+            color: white;
+            width: 100%;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: 0.07s linear;
+            touch-action: manipulation;
+        }
+
+        .restart-btn:active {
+            transform: scale(0.97);
+        }
+
+        @media (max-width: 550px) {
+            .game-container {
+                padding: 12px 12px 20px;
+            }
+            .turn-btn {
+                font-size: 1.8rem;
+                padding: 14px 0;
+            }
+            .score-box {
+                font-size: 1.3rem;
+                padding: 4px 14px;
+            }
+            .pause-btn {
+                font-size: 1.4rem;
+                padding: 4px 16px;
+            }
+        }
+
+        .hint {
+            text-align: center;
+            margin-top: 14px;
+            color: #d4e6b0;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        .wrap-badge {
+            background: #ffb34733;
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 4px 12px;
+            border-radius: 30px;
+            margin-left: 10px;
+            backdrop-filter: blur(2px);
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="info-panel">
+        <div class="score-box">
+            <span>🍎 SCORE</span> <span id="liveScore">0</span>
+            <span class="wrap-badge">🔄 WRAP</span>
+        </div>
+        <button class="pause-btn" id="pauseButton">⏸️ PAUSE</button>
+    </div>
+
+    <canvas id="snakeCanvas" width="400" height="400" style="width:100%; height:auto; max-width:500px; aspect-ratio:1/1"></canvas>
+
+    <div class="control-row">
+        <button class="turn-btn" id="leftTurnBtn">◀ LEFT</button>
+        <button class="turn-btn" id="rightTurnBtn">RIGHT ▶</button>
+    </div>
+    <div class="hint">⬅️ turn left &nbsp;&nbsp;|&nbsp;&nbsp; turn right ➡️ &nbsp;&nbsp;| ✨ wraps around edges | 🔊 sound FX</div>
+</div>
+
+<div id="gameOverlay" class="gameover-overlay">
+    <div class="gameover-card">
+        <h2>💀 GAME OVER 💀</h2>
+        <div class="final-score">Score: <span id="finalScoreSpan">0</span></div>
+        <button class="restart-btn" id="modalRestartBtn">🔄 PLAY AGAIN</button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- DOM elements ----------
+        const canvas = document.getElementById('snakeCanvas');
+        const ctx = canvas.getContext('2d');
+        const liveScoreSpan = document.getElementById('liveScore');
+        const pauseBtn = document.getElementById('pauseButton');
+        const leftBtn = document.getElementById('leftTurnBtn');
+        const rightBtn = document.getElementById('rightTurnBtn');
+        const gameOverlay = document.getElementById('gameOverlay');
+        const finalScoreSpan = document.getElementById('finalScoreSpan');
+        const modalRestartBtn = document.getElementById('modalRestartBtn');
+
+        // ---------- Sound Effects (Web Audio API, no external files) ----------
+        let audioCtx = null;
+        
+        // Initialize AudioContext only after first user interaction (required by browsers)
+        // We'll lazy-init on any tap/click to ensure autoplay policies are satisfied.
+        function initAudio() {
+            if (audioCtx) return audioCtx;
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                return audioCtx;
+            } catch(e) {
+                console.warn("Web Audio not supported");
+                return null;
+            }
+        }
+        
+        // Play a simple "blip" / chime for eating food
+        function playEatSound() {
+            try {
+                const context = initAudio();
+                if (!context) return;
+                // Resume if suspended (user interaction)
+                if (context.state === 'suspended') {
+                    context.resume().then(() => {
+                        generateEatBeep(context);
+                    }).catch(e=>console.log);
+                } else {
+                    generateEatBeep(context);
+                }
+            } catch(e) { console.log("audio error", e); }
+        }
+        
+        function generateEatBeep(context) {
+            const oscillator = context.createOscillator();
+            const gainNode = context.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(context.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.value = 880; // High note A5
+            gainNode.gain.value = 0.25;
+            
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + 0.2);
+            oscillator.stop(context.currentTime + 0.2);
+        }
+        
+        // Play game over sound (low pitch "sad" tone + descending noise)
+        function playGameOverSound() {
+            try {
+                const context = initAudio();
+                if (!context) return;
+                if (context.state === 'suspended') {
+                    context.resume().then(() => {
+                        generateGameOverTone(context);
+                    }).catch(e=>console.log);
+                } else {
+                    generateGameOverTone(context);
+                }
+            } catch(e) { console.log("audio error", e); }
+        }
+        
+        function generateGameOverTone(context) {
+            const now = context.currentTime;
+            // Descending wobble effect using two oscillators
+            const osc1 = context.createOscillator();
+            const osc2 = context.createOscillator();
+            const gainNode = context.createGain();
+            const gainNode2 = context.createGain();
+            
+            osc1.type = 'sawtooth';
+            osc1.frequency.value = 440;
+            osc2.type = 'triangle';
+            osc2.frequency.value = 220;
+            
+            osc1.connect(gainNode);
+            osc2.connect(gainNode2);
+            gainNode.connect(context.destination);
+            gainNode2.connect(context.destination);
+            
+            gainNode.gain.value = 0.2;
+            gainNode2.gain.value = 0.15;
+            
+            osc1.start();
+            osc2.start();
+            
+            // frequency glide down
+            osc1.frequency.exponentialRampToValueAtTime(110, now + 0.5);
+            osc2.frequency.exponentialRampToValueAtTime(82, now + 0.5);
+            
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+            gainNode2.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+            
+            osc1.stop(now + 0.6);
+            osc2.stop(now + 0.6);
+        }
+        
+        // ---------- Game constants ----------
+        const GRID_SIZE = 20;          // 20x20 grid
+        const CELL_SIZE = canvas.width / GRID_SIZE;  // 20px per cell
+        
+        // Directions as vectors
+        const DIR = {
+            UP:    { x: 0, y: -1 },
+            DOWN:  { x: 0, y: 1 },
+            LEFT:  { x: -1, y: 0 },
+            RIGHT: { x: 1, y: 0 }
+        };
+        
+        // Turning logic (relative left/right based on current direction)
+        function turnLeft(dir) {
+            if (dir.x === 0 && dir.y === -1) return DIR.LEFT;   // UP -> LEFT
+            if (dir.x === 0 && dir.y === 1) return DIR.RIGHT;   // DOWN -> RIGHT
+            if (dir.x === -1 && dir.y === 0) return DIR.DOWN;   // LEFT -> DOWN
+            if (dir.x === 1 && dir.y === 0) return DIR.UP;      // RIGHT -> UP
+            return DIR.LEFT;
+        }
+        
+        function turnRight(dir) {
+            if (dir.x === 0 && dir.y === -1) return DIR.RIGHT;  // UP -> RIGHT
+            if (dir.x === 0 && dir.y === 1) return DIR.LEFT;    // DOWN -> LEFT
+            if (dir.x === -1 && dir.y === 0) return DIR.UP;     // LEFT -> UP
+            if (dir.x === 1 && dir.y === 0) return DIR.DOWN;    // RIGHT -> DOWN
+            return DIR.RIGHT;
+        }
+        
+        // ---------- Game state ----------
+        let snake = [];         
+        let food = { x: 15, y: 10 };
+        let currentDir = DIR.RIGHT;
+        let nextDir = DIR.RIGHT;
+        let score = 0;
+        let gameLoopInterval = null;
+        let isGameActive = true;     
+        let isPaused = false;
+        
+        // ---------- Helper functions ----------
+        function updateLiveScoreUI() {
+            liveScoreSpan.innerText = score;
+        }
+        
+        // Wrap-around coordinate: ensures value stays within [0, GRID_SIZE-1]
+        function wrapCoord(value) {
+            if (value < 0) return GRID_SIZE - 1;
+            if (value >= GRID_SIZE) return 0;
+            return value;
+        }
+        
+        // generate food that is not on snake (and also valid)
+        function generateValidFood() {
+            const totalCells = GRID_SIZE * GRID_SIZE;
+            if (snake.length >= totalCells) {
+                gameOver('win');
+                return;
+            }
+            const snakeSet = new Set(snake.map(s => `${s.x},${s.y}`));
+            let freeCells = [];
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    if (!snakeSet.has(`${i},${j}`)) {
+                        freeCells.push({ x: i, y: j });
+                    }
+                }
+            }
+            if (freeCells.length === 0) {
+                gameOver('win');
+                return;
+            }
+            const randIndex = Math.floor(Math.random() * freeCells.length);
+            food = freeCells[randIndex];
+        }
+        
+        // Self-collision check only (no boundary death because we wrap)
+        function isSelfCollision(headX, headY, snakeArray) {
+            for (let i = 0; i < snakeArray.length; i++) {
+                if (snakeArray[i].x === headX && snakeArray[i].y === headY) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        function gameOver(reason = 'collision') {
+            if (!isGameActive) return;
+            isGameActive = false;
+            if (gameLoopInterval) {
+                clearInterval(gameLoopInterval);
+                gameLoopInterval = null;
+            }
+            // Play game over sound effect
+            playGameOverSound();
+            finalScoreSpan.innerText = score;
+            gameOverlay.style.visibility = 'visible';
+        }
+        
+        // The main game move with WRAP-AROUND behaviour (no boundary death)
+        function gameTick() {
+            if (!isGameActive || isPaused) return;
+            
+            // commit direction
+            currentDir = { ...nextDir };
+            
+            // get current head
+            const head = snake[0];
+            
+            // calculate new head with wrapping
+            let rawX = head.x + currentDir.x;
+            let rawY = head.y + currentDir.y;
+            let newHeadX = wrapCoord(rawX);
+            let newHeadY = wrapCoord(rawY);
+            
+            // check if food is eaten
+            const willEat = (newHeadX === food.x && newHeadY === food.y);
+            
+            // build new snake
+            let newSnake = [{ x: newHeadX, y: newHeadY }, ...snake];
+            if (!willEat) {
+                newSnake.pop();
+            }
+            
+            // Self-collision check with the new snake
+            const headSegment = newSnake[0];
+            let selfCollision = false;
+            for (let i = 1; i < newSnake.length; i++) {
+                if (newSnake[i].x === headSegment.x && newSnake[i].y === headSegment.y) {
+                    selfCollision = true;
+                    break;
+                }
+            }
+            
+            if (selfCollision) {
+                gameOver();
+                return;
+            }
+            
+            // apply new snake
+            snake = newSnake;
+            
+            // handle food consumption
+            if (willEat) {
+                score++;
+                updateLiveScoreUI();
+                // Play sound effect for eating food (crispy blip)
+                playEatSound();
+                generateValidFood();
+                if (!isGameActive) return;
+            }
+            
+            // redraw
+            drawGame();
+        }
+        
+        // ---------- Drawing (with wrap indicator) ----------
+        function drawGame() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // draw grid
+            ctx.strokeStyle = '#2f6b47';
+            ctx.lineWidth = 0.7;
+            for (let i = 0; i <= GRID_SIZE; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * CELL_SIZE, 0);
+                ctx.lineTo(i * CELL_SIZE, canvas.height);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i * CELL_SIZE);
+                ctx.lineTo(canvas.width, i * CELL_SIZE);
+                ctx.stroke();
+            }
+            
+            // draw food (apple)
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#ff6b4a';
+            ctx.beginPath();
+            ctx.arc(food.x * CELL_SIZE + CELL_SIZE/2, food.y * CELL_SIZE + CELL_SIZE/2, CELL_SIZE * 0.4, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#cc3333';
+            ctx.beginPath();
+            ctx.arc(food.x * CELL_SIZE + CELL_SIZE/2, food.y * CELL_SIZE + CELL_SIZE/2, CELL_SIZE * 0.2, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffffee';
+            ctx.beginPath();
+            ctx.arc(food.x * CELL_SIZE + CELL_SIZE/2 - 2, food.y * CELL_SIZE + CELL_SIZE/2 - 2, 2, 0, Math.PI*2);
+            ctx.fill();
+            
+            // draw snake
+            for (let i = 0; i < snake.length; i++) {
+                const seg = snake[i];
+                const grad = ctx.createLinearGradient(seg.x * CELL_SIZE, seg.y * CELL_SIZE, (seg.x+1)*CELL_SIZE, (seg.y+1)*CELL_SIZE);
+                grad.addColorStop(0, '#4caf50');
+                grad.addColorStop(1, '#2e7d32');
+                ctx.fillStyle = grad;
+                ctx.fillRect(seg.x * CELL_SIZE + 1, seg.y * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                
+                // eyes on head
+                if (i === 0) {
+                    ctx.fillStyle = 'white';
+                    const eyeW = CELL_SIZE * 0.22;
+                    const eyeH = CELL_SIZE * 0.22;
+                    if (currentDir.x === 1) { // right
+                        ctx.fillRect(seg.x * CELL_SIZE + CELL_SIZE - 6, seg.y * CELL_SIZE + 5, eyeW, eyeH);
+                        ctx.fillRect(seg.x * CELL_SIZE + CELL_SIZE - 6, seg.y * CELL_SIZE + CELL_SIZE - 10, eyeW, eyeH);
+                        ctx.fillStyle = '#0a0a0a';
+                        ctx.fillRect(seg.x * CELL_SIZE + CELL_SIZE - 4, seg.y * CELL_SIZE + 7, eyeW*0.5, eyeH*0.5);
+                        ctx.fillRect(seg.x * CELL_SIZE + CELL_SIZE - 4, seg.y * CELL_SIZE + CELL_SIZE - 8, eyeW*0.5, eyeH*0.5);
+                    } 
+                    else if (currentDir.x === -1) { // left
+                        ctx.fillRect(seg.x * CELL_SIZE + 2, seg.y * CELL_SIZE + 5, eyeW, eyeH);
+                        ctx.fillRect(seg.x * CELL_SIZE + 2, seg.y * CELL_SIZE + CELL_SIZE - 10, eyeW, eyeH);
+                        ctx.fillStyle = '#0a0a0a';
+                        ctx.fillRect(seg.x * CELL_SIZE + 4, seg.y * CELL_SIZE + 7, eyeW*0.5, eyeH*0.5);
+                        ctx.fillRect(seg.x * CELL_SIZE + 4, seg.y * CELL_SIZE + CELL_SIZE - 8, eyeW*0.5, eyeH*0.5);
+                    }
+                    else if (currentDir.y === -1) { // up
+                        ctx.fillRect(seg.x * CELL_SIZE + 5, seg.y * CELL_SIZE + 2, eyeW, eyeH);
+                        ctx.fillRect(seg.x * CELL_SIZE + CELL_SIZE - 12, seg.y * CELL_SIZE + 2, eyeW, eyeH);
+                        ctx.fillStyle = '#0a0a0a';
+                        ctx.fillRect(seg.x * CELL_SIZE + 7, seg.y * CELL_SIZE + 4, eyeW*0.5, eyeH*0.5);
+                        ctx.fillRect(seg.x * CELL_SIZE + CELL_SIZE - 10, seg.y * CELL_SIZE + 4, eyeW*0.5, eyeH*0.5);
+                    }
+                    else if (currentDir.y === 1) { // down
+                        ctx.fillRect(seg.x * CELL_SIZE + 5, seg.y * CELL_SIZE + CELL_SIZE - 9, eyeW, eyeH);
+                        ctx.fillRect(seg.x * CELL_SIZE + CELL_SIZE - 12, seg.y * CELL_SIZE + CELL_SIZE - 9, eyeW, eyeH);
+                        ctx.fillStyle = '#0a0a0a';
+                        ctx.fillRect(seg.x * CELL_SIZE + 7, seg.y * CELL_SIZE + CELL_SIZE - 7, eyeW*0.5, eyeH*0.5);
+                        ctx.fillRect(seg.x * CELL_SIZE + CELL_SIZE - 10, seg.y * CELL_SIZE + CELL_SIZE - 7, eyeW*0.5, eyeH*0.5);
+                    }
+                    else {
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(seg.x * CELL_SIZE + 4, seg.y * CELL_SIZE + 4, 4, 4);
+                        ctx.fillRect(seg.x * CELL_SIZE + CELL_SIZE-8, seg.y * CELL_SIZE + 4, 4, 4);
+                    }
+                } else {
+                    ctx.fillStyle = '#1b5e2a';
+                    ctx.fillRect(seg.x * CELL_SIZE + 3, seg.y * CELL_SIZE + 3, CELL_SIZE-6, CELL_SIZE-6);
+                }
+            }
+            
+            // wrap-decoration subtle arrows
+            ctx.globalAlpha = 0.5;
+            ctx.font = `${CELL_SIZE * 0.6}px monospace`;
+            ctx.fillStyle = '#b9f6ca';
+            ctx.fillText('↺', 5, 20);
+            ctx.fillText('↺', canvas.width-22, 20);
+            ctx.fillText('↺', 5, canvas.height-10);
+            ctx.fillText('↺', canvas.width-22, canvas.height-10);
+            ctx.globalAlpha = 1;
+            
+            if (isPaused && isGameActive) {
+                ctx.font = `bold ${Math.floor(CELL_SIZE * 1.8)}px monospace`;
+                ctx.fillStyle = '#ffffffcc';
+                ctx.fillText('⏸', canvas.width/2 - 22, canvas.height/2 + 12);
+                ctx.font = `bold ${Math.floor(CELL_SIZE * 0.9)}px system-ui`;
+                ctx.fillStyle = '#f9f3a0';
+                ctx.fillText('PAUSED', canvas.width/2 - 40, canvas.height/2 + 48);
+            }
+        }
+        
+        // Direction change with no 180° reversal
+        function attemptChangeDirection(newDir) {
+            if (!isGameActive || isPaused) return;
+            if ((currentDir.x === -newDir.x && currentDir.y === -newDir.y)) {
+                return;
+            }
+            nextDir = newDir;
+        }
+        
+        function handleTurnLeft() {
+            if (!isGameActive || isPaused) return;
+            const newDir = turnLeft(currentDir);
+            attemptChangeDirection(newDir);
+            // Ensure audio context initializes on first user interaction (tap any button)
+            initAudio()?.resume().catch(e=>{});
+        }
+        
+        function handleTurnRight() {
+            if (!isGameActive || isPaused) return;
+            const newDir = turnRight(currentDir);
+            attemptChangeDirection(newDir);
+            initAudio()?.resume().catch(e=>{});
+        }
+        
+        function togglePause() {
+            if (!isGameActive) return;
+            isPaused = !isPaused;
+            pauseBtn.innerHTML = isPaused ? '▶️ RESUME' : '⏸️ PAUSE';
+            drawGame();
+            // Also resume audio on any click to be safe
+            initAudio()?.resume().catch(e=>{});
+        }
+        
+        function restartGame() {
+            if (gameLoopInterval) {
+                clearInterval(gameLoopInterval);
+                gameLoopInterval = null;
+            }
+            // Reset all state vars
+            snake = [
+                { x: 10, y: 10 },
+                { x: 9, y: 10 },
+                { x: 8, y: 10 }
+            ];
+            currentDir = DIR.RIGHT;
+            nextDir = DIR.RIGHT;
+            score = 0;
+            isGameActive = true;
+            isPaused = false;
+            pauseBtn.innerHTML = '⏸️ PAUSE';
+            gameOverlay.style.visibility = 'hidden';
+            updateLiveScoreUI();
+            generateValidFood();
+            drawGame();
+            gameLoopInterval = setInterval(gameTick, 140);
+            // Optional: resume audio on restart if needed
+            initAudio()?.resume().catch(e=>{});
+        }
+        
+        // ---------- Initialization ----------
+        function initGame() {
+            restartGame();
+        }
+        
+        // ---------- Attach Event Listeners (touch + click) and audio initialization on first tap ----------
+        function resumeAudioOnUserGesture() {
+            const ctxAudio = initAudio();
+            if (ctxAudio && ctxAudio.state === 'suspended') {
+                ctxAudio.resume().catch(e=>console.log("Audio resume failed:", e));
+            }
+        }
+        
+        leftBtn.addEventListener('click', (e) => { e.preventDefault(); resumeAudioOnUserGesture(); handleTurnLeft(); });
+        leftBtn.addEventListener('touchstart', (e) => { e.preventDefault(); resumeAudioOnUserGesture(); handleTurnLeft(); });
+        rightBtn.addEventListener('click', (e) => { e.preventDefault(); resumeAudioOnUserGesture(); handleTurnRight(); });
+        rightBtn.addEventListener('touchstart', (e) => { e.preventDefault(); resumeAudioOnUserGesture(); handleTurnRight(); });
+        pauseBtn.addEventListener('click', () => { resumeAudioOnUserGesture(); togglePause(); });
+        pauseBtn.addEventListener('touchstart', (e) => { e.preventDefault(); resumeAudioOnUserGesture(); togglePause(); });
+        modalRestartBtn.addEventListener('click', () => { resumeAudioOnUserGesture(); restartGame(); });
+        modalRestartBtn.addEventListener('touchstart', (e) => { e.preventDefault(); resumeAudioOnUserGesture(); restartGame(); });
+        
+        // Also any canvas tap could resume audio (optional)
+        canvas.addEventListener('click', () => resumeAudioOnUserGesture());
+        
+        window.addEventListener('touchmove', function(e) {
+            if (e.target.closest('.turn-btn') || e.target.closest('.pause-btn') || e.target.closest('.restart-btn')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Keyboard controls for testing
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') { e.preventDefault(); resumeAudioOnUserGesture(); handleTurnLeft(); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); resumeAudioOnUserGesture(); handleTurnRight(); }
+            else if (e.key === ' ' || e.key === 'Space' || e.key === 'p') { e.preventDefault(); resumeAudioOnUserGesture(); togglePause(); }
+            else if (e.key === 'r') { if (!isGameActive || gameOverlay.style.visibility === 'visible') { resumeAudioOnUserGesture(); restartGame(); } }
+        });
+        
+        initGame();
+    })();
+</script>
+</body>
+  </html>
